@@ -5,6 +5,10 @@ matplotlib>=3.4.0
 scipy>=1.7.0
 pillow>=8.3.0
 tqdm>=4.62.0
+# 文本处理
+nltk>=3.6
+# COCO数据集支持（可选）
+pycocotools>=2.0.4
 # 评估指标
 pytorch-fid>=0.3.0
 lpips>=0.1.4

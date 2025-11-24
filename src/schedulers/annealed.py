@@ -48,6 +48,14 @@ class AnnealedScheduler(ParameterScheduler):
                 value = initial * ((final / initial) ** (progress ** decay_rate))
             elif schedule_type == 'cosine':
                 value = final + (initial - final) * 0.5 * (1 + np.cos(np.pi * progress))
+            elif schedule_type == 'triangular':
+                # 三角波退火：warm-up-cool-down
+                if progress < 0.5:
+                    # Warm-up阶段：线性增加
+                    value = initial + (initial + final - initial) * (progress / 0.5)
+                else:
+                    # Cool-down阶段：线性减少
+                    value = initial + final - (initial + final - initial) * ((progress - 0.5) / 0.5)
             elif schedule_type == 'step':
                 # 阶梯式退火
                 step_size = config.get('step_size', 0.1)
