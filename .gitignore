@@ -41,6 +41,10 @@ wheels/
 # Data
 data/raw/
 data/processed/
+data/CUB_200_2011/
+data/*.tgz
+data/*.tar.gz
+data/*.zip
 *.h5
 *.hdf5
 
