@@ -341,5 +341,7 @@ def main():
     print("  3. schedule_params_fixed_annealing.png - Schedule参数曲线 ⭐核心")
     print("  4. grad_norms_fixed_annealing.png - 梯度范数")
     print("=" * 70)
-    
-    # ========== 最
+
+if __name__ == "__main__":
+    main()
+
