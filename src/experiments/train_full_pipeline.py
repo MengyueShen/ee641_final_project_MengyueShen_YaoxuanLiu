@@ -91,57 +91,36 @@ def main():
     (results_dir / 'checkpoints').mkdir(exist_ok=True)
     (results_dir / 'figures').mkdir(exist_ok=True)
     
-    # ========== 1. 加载数据集 ==========
-    print("\n[1/5] 加载数据集...")
+    # ========== 1. 加载 COCO 数据集 ==========
+    print("\n[1/5] 加载 COCO 2017 数据集 (train/val)...")
     try:
-        # 加载训练集和测试集（数据集自带划分）
-        train_dataset_full = CUB200Dataset(
-            root_dir='./data/CUB_200_2011',
+        coco_root = './data/COCO2017'
+        train_dataset_full = COCODataset(
+            root_dir=coco_root,
             split='train',
             max_text_length=18
         )
-        test_dataset = CUB200Dataset(
-            root_dir='./data/CUB_200_2011',
-            split='test',
+        test_dataset = COCODataset(
+            root_dir=coco_root,
+            split='val',
             max_text_length=18,
-            vocab=train_dataset_full.vocab  # 使用训练集的词汇表
+            vocab=train_dataset_full.vocab
         )
-        
-        # 从训练集中划分出验证集（80%训练，20%验证）
         train_size = int(0.8 * len(train_dataset_full))
         val_size = len(train_dataset_full) - train_size
         train_dataset, val_dataset = random_split(
             train_dataset_full,
-            [train_size, val_size],
-            generator=torch.Generator().manual_seed(42)
+            [train_size, val_size]
         )
-        
-        print(f"✅ 数据集加载成功")
-        print(f"   训练集: {len(train_dataset)} 张")
-        print(f"   验证集: {len(val_dataset)} 张")
-        print(f"   测试集: {len(test_dataset)} 张")
+        print(f"   训练集 (train): {len(train_dataset)} 张")
+        print(f"   验证集 (val): {len(val_dataset)} 张")
+        print(f"   测试集 (val2017): {len(test_dataset)} 张")
         print(f"   词汇表大小: {train_dataset_full.vocab_size}")
-        
     except Exception as e:
-        print(f"❌ 数据集加载失败: {e}")
-        print("请确保数据集已下载到 ./data/CUB_200_2011/")
+        print(f"❌ COCO 数据集加载失败: {e}")
+        print("请确保 COCO2017 数据集已下载到 ./data/COCO2017，"
+              "且包含 annotations/captions_train2017.json 和 captions_val2017.json")
         return
-    
-    # 创建DataLoader
-    train_loader = DataLoader(
-        train_dataset,
-        batch_size=batch_size,
-        shuffle=True,
-        collate_fn=collate_fn,
-        num_workers=2
-    )
-    val_loader = DataLoader(
-        val_dataset,
-        batch_size=batch_size,
-        shuffle=False,
-        collate_fn=collate_fn,
-        num_workers=2
-    )
     
     # ========== 2. 创建模型 ==========
     print("\n[2/5] 创建模型...")
