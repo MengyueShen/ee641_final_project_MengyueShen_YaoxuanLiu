@@ -1,0 +1,9 @@
+torch
+torchvision
+numpy
+matplotlib
+tqdm
+Pillow
+pycocotools
+open_clip_torch
+scipy
