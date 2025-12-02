@@ -227,11 +227,12 @@ class COCODataset(TextImageDataset):
     需要COCO API: pip install pycocotools
     """
     
-    def __init__(self, root_dir, split='train', transform=None, max_text_length=18):
+    def __init__(self, root_dir, split='train', transform=None, max_text_length=18, vocab=None):
         self.root_dir = root_dir
         self.split = split
         
-        super().__init__(root_dir, split, transform, max_text_length)
+        # 这里把 vocab 传给基类：如果为 None，则基类会自己根据数据构建；如果传入，就复用同一个词表
+        super().__init__(root_dir, split, transform, max_text_length, vocab=vocab)
     
     def _load_data(self):
         """加载COCO数据"""
@@ -245,7 +246,7 @@ class COCODataset(TextImageDataset):
         
         data = []
         
-        # COCO数据路径
+        # COCO数据路径（使用 COCO 2017）
         ann_file = os.path.join(
             self.root_dir, 
             f'annotations/captions_{self.split}2017.json'
