@@ -19,7 +19,7 @@ def main():
             scheduler_type=sched,
             image_size=256,
             batch_size=32,
-            num_epochs=10,
+            num_epochs=15,
             device="cuda",
             run_eval=True,
             n_eval_samples=5000,
@@ -37,3 +37,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
