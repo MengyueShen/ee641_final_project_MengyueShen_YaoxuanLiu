@@ -21,7 +21,7 @@ from models.generator_discriminator import ConditionalGenerator, ConditionalDisc
 from schedulers.annealed import AnnealedScheduler
 from schedulers.learnable_monotone import LearnableMonotoneScheduler
 from schedulers.adaptive_annealed import AdaptiveAnnealedScheduler
-
+from torchvision.models import inception_v3, Inception_V3_Weights
 
 def apply_augmentation(images: torch.Tensor, p: float) -> torch.Tensor:
     if p <= 0.0:
@@ -49,17 +49,20 @@ def compute_grad_norm(parameters) -> float:
 
 
 def _build_inception_models(device: torch.device):
+   
+    weights = Inception_V3_Weights.IMAGENET1K_V1
+
     logits_model = inception_v3(
-        pretrained=True,
+        weights=weights,
         transform_input=False,
-        aux_logits=False,
+        aux_logits=True,
     ).to(device)
     logits_model.eval()
 
     feats_model = inception_v3(
-        pretrained=True,
+        weights=weights,
         transform_input=False,
-        aux_logits=False,
+        aux_logits=True,
     )
     feats_model.fc = nn.Identity()
     feats_model = feats_model.to(device)
@@ -77,8 +80,18 @@ def _get_inception_features_and_logits(
     with torch.no_grad():
         x = F.interpolate(images, size=(299, 299), mode="bilinear", align_corners=False)
         x = (x + 1.0) * 0.5
-        logits = logits_model(x)
-        feats = feats_model(x)
+
+        out_logits = logits_model(x)
+        if isinstance(out_logits, torch.Tensor):
+            logits = out_logits
+        else:  # InceptionOutputs
+            logits = out_logits.logits
+
+        out_feats = feats_model(x)
+        if isinstance(out_feats, torch.Tensor):
+            feats = out_feats
+        else:  # InceptionOutputs（fc=Identity 时 logits 即为特征）
+            feats = out_feats.logits
 
     preds = F.softmax(logits, dim=1).cpu().numpy()
     feats_np = feats.cpu().numpy()
@@ -562,3 +575,4 @@ if __name__ == "__main__":
         n_eval_samples=args.eval_samples,
         results_dir=args.results_dir,
     )
+
