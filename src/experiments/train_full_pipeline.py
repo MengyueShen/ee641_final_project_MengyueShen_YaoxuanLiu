@@ -17,7 +17,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 from src.models.text_to_image_gan import TextToImageGAN
 from src.schedulers.annealed import AnnealedScheduler
-from src.utils.datasets import CUB200Dataset, collate_fn
+from src.utils.datasets import COCODataset, collate_fn
 from src.utils.visualization import TrainingVisualizer
 
 
