@@ -10,7 +10,7 @@ class ConditionalGenerator(nn.Module):
         self,
         noise_dim: int = 128,
         text_dim: int = 512,
-        base_channels: int = 64,
+        base_channels: int = 128,
         image_size: int = 256,
     ) -> None:
         super().__init__()
@@ -56,7 +56,7 @@ class ConditionalDiscriminator(nn.Module):
     def __init__(
         self,
         text_dim: int = 512,
-        base_channels: int = 64,
+        base_channels: int = 128,
         image_size: int = 256,
     ) -> None:
         super().__init__()
@@ -92,3 +92,4 @@ class ConditionalDiscriminator(nn.Module):
         x = self.final(x)
         x = x.view(x.size(0), 1)
         return x
+
