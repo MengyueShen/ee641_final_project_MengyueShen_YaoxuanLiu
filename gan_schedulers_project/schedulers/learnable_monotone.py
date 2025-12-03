@@ -62,9 +62,9 @@ class LearnableMonotoneScheduler(BaseScheduler):
         v_aug = self._monotone_curve(self.aug_logits, u)
         v_reg = self._monotone_curve(self.reg_logits, u)
 
-        noise_sigma = self.min_noise + (self.max_noise - self.min_noise) * float(v_noise)
-        aug_p = self.min_aug + (self.max_aug - self.min_aug) * float(v_aug)
-        reg_lambda = self.min_reg + (self.max_reg - self.min_reg) * float(v_reg)
+        noise_sigma = self.min_noise + (self.max_noise - self.min_noise) * v_noise
+        aug_p = self.min_aug + (self.max_aug - self.min_aug) * v_aug
+        reg_lambda = self.min_reg + (self.max_reg - self.min_reg) * v_reg
 
         return {
             "noise_sigma": noise_sigma,
