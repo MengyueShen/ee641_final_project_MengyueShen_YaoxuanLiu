@@ -425,20 +425,27 @@ def train(
 
             noise_sigma = sched_out["noise_sigma"]
             reg_lambda = sched_out["reg_lambda"]
-            aug_p = float(sched_out["augment_p"])
+            aug_p = sched_out["augment_p"]
+            if torch.is_tensor(aug_p):
+                aug_p = float(aug_p.detach().cpu().item())
+            else:
+                aug_p = float(aug_p)
 
             if not torch.is_tensor(noise_sigma):
-              noise_sigma = torch.tensor(
-                float(noise_sigma),
-                dtype=torch.float32,
-                device=device_t,
+                noise_sigma = torch.tensor(
+                    float(noise_sigma),
+                    dtype=torch.float32,
+                    device=device_t,
                 )
             if not torch.is_tensor(reg_lambda):
-              reg_lambda = torch.tensor(
-                float(reg_lambda),
-                dtype=torch.float32,
-                device=device_t,
+                reg_lambda = torch.tensor(
+                    float(reg_lambda),
+                    dtype=torch.float32,
+                    device=device_t,
                 )
+
+            noise_sigma_d = noise_sigma.detach()
+            reg_lambda_d = reg_lambda.detach()
 
             valid = torch.ones(batch_size_curr, 1, device=device_t)
             fake = torch.zeros(batch_size_curr, 1, device=device_t)
@@ -448,15 +455,15 @@ def train(
             real_logits = D(real_images_aug, text_features)
             loss_real = criterion(real_logits, valid)
 
-            noise = torch.randn(batch_size_curr, 128, device=device_t) * noise_sigma
+            noise = torch.randn(batch_size_curr, 128, device=device_t) * noise_sigma_d
             fake_images = G(noise, text_features.detach())
             fake_images_aug = apply_augmentation(fake_images.detach(), aug_p)
             fake_logits = D(fake_images_aug, text_features)
             loss_fake = criterion(fake_logits, fake)
 
             loss_D = loss_real + loss_fake
-            if reg_lambda.item() > 0.0:
-                reg_loss = reg_lambda * (fake_images ** 2).mean()
+            if reg_lambda_d.item() > 0.0:
+                reg_loss = reg_lambda_d * (fake_images ** 2).mean()
                 loss_D = loss_D + reg_loss
 
             loss_D.backward()
@@ -599,3 +606,4 @@ if __name__ == "__main__":
         n_eval_samples=args.eval_samples,
         results_dir=args.results_dir,
     )
+
