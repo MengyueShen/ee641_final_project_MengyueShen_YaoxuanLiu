@@ -23,6 +23,7 @@ from schedulers.learnable_monotone import LearnableMonotoneScheduler
 from schedulers.adaptive_annealed import AdaptiveAnnealedScheduler
 from torchvision.models import inception_v3, Inception_V3_Weights
 
+
 def apply_augmentation(images: torch.Tensor, p: float) -> torch.Tensor:
     if p <= 0.0:
         return images
@@ -49,7 +50,6 @@ def compute_grad_norm(parameters) -> float:
 
 
 def _build_inception_models(device: torch.device):
-   
     weights = Inception_V3_Weights.IMAGENET1K_V1
 
     logits_model = inception_v3(
@@ -84,13 +84,13 @@ def _get_inception_features_and_logits(
         out_logits = logits_model(x)
         if isinstance(out_logits, torch.Tensor):
             logits = out_logits
-        else:  # InceptionOutputs
+        else:
             logits = out_logits.logits
 
         out_feats = feats_model(x)
         if isinstance(out_feats, torch.Tensor):
             feats = out_feats
-        else:  # InceptionOutputs（fc=Identity 时 logits 即为特征）
+        else:
             feats = out_feats.logits
 
     preds = F.softmax(logits, dim=1).cpu().numpy()
@@ -294,6 +294,7 @@ def evaluate_metrics(
     }
     return metrics
 
+
 def train(
     data_root: str,
     scheduler_type: str = "annealed",
@@ -390,7 +391,7 @@ def train(
 
     total_steps = num_epochs * len(train_loader)
     global_step = 0
-    
+
     history: Dict[str, List[float]] = {
         "loss_D": [],
         "loss_G": [],
@@ -421,9 +422,9 @@ def train(
             text_features = text_encoder(texts).to(device_t)
 
             sched_out = scheduler(global_step, total_steps, state_for_sched)
-            noise_sigma = float(sched_out["noise_sigma"])
+            noise_sigma = sched_out["noise_sigma"]
             aug_p = float(sched_out["augment_p"])
-            reg_lambda = float(sched_out["reg_lambda"])
+            reg_lambda = sched_out["reg_lambda"]
 
             valid = torch.ones(batch_size_curr, 1, device=device_t)
             fake = torch.zeros(batch_size_curr, 1, device=device_t)
@@ -440,7 +441,7 @@ def train(
             loss_fake = criterion(fake_logits, fake)
 
             loss_D = loss_real + loss_fake
-            if reg_lambda > 0.0:
+            if reg_lambda.item() > 0.0:
                 reg_loss = reg_lambda * (fake_images ** 2).mean()
                 loss_D = loss_D + reg_loss
 
@@ -469,9 +470,9 @@ def train(
 
             history["loss_D"].append(float(loss_D.item()))
             history["loss_G"].append(float(loss_G.item()))
-            history["noise_sigma"].append(noise_sigma)
-            history["augment_p"].append(aug_p)
-            history["reg_lambda"].append(reg_lambda)
+            history["noise_sigma"].append(float(noise_sigma.detach().cpu().item()))
+            history["augment_p"].append(float(aug_p))
+            history["reg_lambda"].append(float(reg_lambda.detach().cpu().item()))
 
             state_for_sched["loss_g"] = float(loss_G.item())
             state_for_sched["loss_d"] = float(loss_D.item())
@@ -482,9 +483,9 @@ def train(
                 {
                     "loss_d": loss_D.item(),
                     "loss_g": loss_G.item(),
-                    "noise": noise_sigma,
+                    "noise": float(noise_sigma.detach().cpu().item()),
                     "aug_p": aug_p,
-                    "reg": reg_lambda,
+                    "reg": float(reg_lambda.detach().cpu().item()),
                 }
             )
 
@@ -584,5 +585,3 @@ if __name__ == "__main__":
         n_eval_samples=args.eval_samples,
         results_dir=args.results_dir,
     )
-
-
