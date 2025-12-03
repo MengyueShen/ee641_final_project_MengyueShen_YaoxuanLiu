@@ -422,9 +422,23 @@ def train(
             text_features = text_encoder(texts).to(device_t)
 
             sched_out = scheduler(global_step, total_steps, state_for_sched)
+
             noise_sigma = sched_out["noise_sigma"]
-            aug_p = float(sched_out["augment_p"])
             reg_lambda = sched_out["reg_lambda"]
+            aug_p = float(sched_out["augment_p"])
+
+            if not torch.is_tensor(noise_sigma):
+              noise_sigma = torch.tensor(
+                float(noise_sigma),
+                dtype=torch.float32,
+                device=device_t,
+                )
+            if not torch.is_tensor(reg_lambda):
+              reg_lambda = torch.tensor(
+                float(reg_lambda),
+                dtype=torch.float32,
+                device=device_t,
+                )
 
             valid = torch.ones(batch_size_curr, 1, device=device_t)
             fake = torch.zeros(batch_size_curr, 1, device=device_t)
