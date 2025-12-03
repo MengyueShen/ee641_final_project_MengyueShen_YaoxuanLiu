@@ -84,10 +84,26 @@ class AdaptiveAnnealedScheduler(BaseScheduler):
         scale_raw = (h + 1.0) * 0.5
         scale = self.min_scale + (self.max_scale - self.min_scale) * scale_raw
 
-        noise_sigma = base["noise_sigma"] * float(scale[0])
-        augment_p = base["augment_p"] * float(scale[1])
-        augment_p = max(0.0, min(1.0, augment_p))
-        reg_lambda = base["reg_lambda"] * float(scale[2])
+        base_noise = torch.tensor(
+            float(base["noise_sigma"]),
+            dtype=torch.float32,
+            device=self.mlp[0].weight.device,
+        )
+        base_aug = torch.tensor(
+            float(base["augment_p"]),
+            dtype=torch.float32,
+            device=self.mlp[0].weight.device,
+        )
+        base_reg = torch.tensor(
+            float(base["reg_lambda"]),
+            dtype=torch.float32,
+            device=self.mlp[0].weight.device,
+        )
+
+        noise_sigma = base_noise * scale[0]
+        augment_p = base_aug * scale[1]
+        augment_p = torch.clamp(augment_p, 0.0, 1.0)
+        reg_lambda = base_reg * scale[2]
 
         return {
             "noise_sigma": noise_sigma,
