@@ -294,7 +294,6 @@ def evaluate_metrics(
     }
     return metrics
 
-
 def train(
     data_root: str,
     scheduler_type: str = "annealed",
@@ -305,6 +304,7 @@ def train(
     run_eval: bool = False,
     n_eval_samples: int = 5000,
     results_dir: str = "results",
+    scheduler_kwargs: Dict[str, float] = None,
 ) -> Dict[str, float]:
     device_t = torch.device(device if torch.cuda.is_available() else "cpu")
 
@@ -361,14 +361,17 @@ def train(
         image_size=image_size,
     ).to(device_t)
 
+    if scheduler_kwargs is None:
+        scheduler_kwargs = {}
+
     if scheduler_type == "annealed":
-        scheduler = AnnealedScheduler()
+        scheduler = AnnealedScheduler(**scheduler_kwargs)
         sched_params = []
     elif scheduler_type == "learnable":
-        scheduler = LearnableMonotoneScheduler()
+        scheduler = LearnableMonotoneScheduler(**scheduler_kwargs)
         sched_params = list(scheduler.parameters())
     elif scheduler_type == "adaptive":
-        scheduler = AdaptiveAnnealedScheduler()
+        scheduler = AdaptiveAnnealedScheduler(**scheduler_kwargs)
         sched_params = list(scheduler.parameters())
     else:
         raise ValueError(f"Unknown scheduler_type: {scheduler_type}")
@@ -387,13 +390,20 @@ def train(
 
     total_steps = num_epochs * len(train_loader)
     global_step = 0
-
+    
     history: Dict[str, List[float]] = {
         "loss_D": [],
         "loss_G": [],
         "noise_sigma": [],
         "augment_p": [],
         "reg_lambda": [],
+    }
+
+    state_for_sched: Dict[str, float] = {
+        "loss_g": 0.0,
+        "loss_d": 0.0,
+        "grad_norm_g": 0.0,
+        "grad_norm_d": 0.0,
     }
 
     for epoch in range(num_epochs):
@@ -410,7 +420,6 @@ def train(
 
             text_features = text_encoder(texts).to(device_t)
 
-            state_for_sched: Dict[str, float] = {}
             sched_out = scheduler(global_step, total_steps, state_for_sched)
             noise_sigma = float(sched_out["noise_sigma"])
             aug_p = float(sched_out["augment_p"])
@@ -575,4 +584,5 @@ if __name__ == "__main__":
         n_eval_samples=args.eval_samples,
         results_dir=args.results_dir,
     )
+
 
